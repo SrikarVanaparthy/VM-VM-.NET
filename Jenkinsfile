@@ -52,10 +52,10 @@ pipeline {
 
     post {
         success {
-            echo 'File transfer and migration completed successfully.'
+            echo '✅ File transfer and migration completed successfully.'
         }
         failure {
-            echo 'Migration failed. Please check the logs.'
+            echo '❌ Migration failed. Please check the logs.'
         }
     }
 }
