@@ -19,13 +19,11 @@ pipeline {
                         $keyPath = Join-Path -Path (Get-Location) -ChildPath "jenkins_id_rsa"
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                        # Secure the key permissions (OpenSSH-style)
-                        $acl = New-Object System.Security.AccessControl.FileSecurity
-                        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
-                        $acl.SetOwner([System.Security.Principal.NTAccount]$env:USERNAME)
-                        $acl.SetAccessRuleProtection($true, $false)
-                        $acl.AddAccessRule($rule)
-                        Set-Acl -Path $keyPath -AclObject $acl
+                        Write-Host "Setting secure permissions on private key file..."
+                        icacls $keyPath /inheritance:r
+                        icacls $keyPath /grant:r "${env:USERNAME}:(R)"
+                        icacls $keyPath /remove "Users"
+
 
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
                         $remoteUser = "$env:SSH_USER"
