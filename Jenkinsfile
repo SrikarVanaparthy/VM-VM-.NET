@@ -16,18 +16,14 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                     powershell '''
-                        # Set key destination inside workspace
+                        # Define where to copy the key
                         $keyPath = Join-Path -Path (Get-Location) -ChildPath "jenkins_id_rsa"
 
-                        # Copy the SSH key to a usable location
+                        # Copy the private key to a writable location
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                        $acl = Get-Acl $keyPath
-                        $acl.SetAccessRuleProtection($true, $false)
-                        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
-                        $acl.SetAccessRule($rule)
-                        Set-Acl -Path $keyPath -AclObject $acl
-
+                        # Fix permissions to meet SSH requirements
+                        icacls $keyPath /inheritance:r /grant:r "$env:USERNAME:R" /c | Out-Null
 
                         # SCP parameters
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
@@ -36,7 +32,7 @@ pipeline {
                         $destinationPath = "C:/Users/Admin/Desktop/users.json"
                         $scriptPath = "./migrate.ps1"
 
-                        # Run migration
+                        # Run migration script
                         & $scriptPath `
                             -SourceFile $sourceFile `
                             -RemoteUser $remoteUser `
@@ -56,10 +52,10 @@ pipeline {
 
     post {
         success {
-            echo ' File transfer and migration completed successfully.'
+            echo 'File transfer and migration completed successfully.'
         }
         failure {
-            echo ' Migration failed. Please check the logs.'
+            echo 'Migration failed. Please check the logs.'
         }
     }
 }

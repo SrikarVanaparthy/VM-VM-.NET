@@ -6,22 +6,20 @@ param (
     [string]$DestinationPath
 )
 
-# Ensure the key file exists
+# Check if key exists
 if (-not (Test-Path $PrivateKeyPath)) {
     Write-Error "Private key file not found at: $PrivateKeyPath"
     exit 1
 }
 
-# Secure the key file permissions (required by SSH)
-Write-Host "Setting secure permissions on private key file: $PrivateKeyPath"
-icacls $PrivateKeyPath /inheritance:r | Out-Null
-icacls $PrivateKeyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
-icacls $PrivateKeyPath /remove "Users" | Out-Null
+# Optional: reset permissions again just in case
+Write-Host "Setting secure permissions on private key..."
+icacls $PrivateKeyPath /inheritance:r /grant:r "$env:USERNAME:R" /c | Out-Null
 
-# Construct remote destination path
+# Build remote destination
 $remoteTarget = "${RemoteUser}@${RemoteIP}:`"$DestinationPath`""
 
-# Build SCP command arguments
+# SCP arguments
 $scpArgs = @(
     "-i", "`"$PrivateKeyPath`"",
     "-o", "StrictHostKeyChecking=no",
@@ -33,8 +31,8 @@ Write-Host "Starting SCP transfer..."
 & scp @scpArgs
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error " File transfer failed with exit code $LASTEXITCODE"
+    Write-Error "File transfer failed with exit code $LASTEXITCODE"
     exit 1
 }
 
-Write-Host "File transfer completed successfully."
+Write-Host "✅ File transfer completed successfully."
