@@ -22,7 +22,7 @@ pipeline {
                     
                     
 
-                    Set-Content -Path $keyPath -Value $privateKeyContent -Force
+                    // Set-Content -Path $keyPath -Value $privateKeyContent -Force
 
                     # Define parameters for migrate.ps1
                     $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
