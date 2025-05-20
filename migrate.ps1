@@ -1,7 +1,8 @@
 $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
 $remoteUser = "admin"
 $remoteIP = "104.154.40.124"
-$privateKeyPath = "C:\\Users\\Admin-BL\\.ssh\\id_rsa"
+$privateKeyPath = "C:\\Jenkins\\ssh\\id_rsa"
+
 
 $destinationPath = "${remoteUser}@${remoteIP}:`"/C:/Users/Admin/Desktop/`""
 
