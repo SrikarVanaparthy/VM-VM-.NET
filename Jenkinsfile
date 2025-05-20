@@ -30,7 +30,7 @@ pipeline {
                     $remoteIP   = "104.154.40.124"
                     $destinationPath = "C:/Users/Admin/Desktop/users.json"
 
-                    $scriptPath = "$PWD\\migrate.ps1"
+                    $scriptPath = "./migrate.ps1"
 
                     if (!(Test-Path $scriptPath)) {
                         Write-Error "migrate.ps1 script not found."
