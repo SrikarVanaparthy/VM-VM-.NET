@@ -1,29 +1,55 @@
-$sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
-$remoteUser = "admin"
-$remoteIP = "104.154.40.124"
-$privateKeyPath = "C:\\Users\\Admin-BL\\.ssh\\id_rsa"
+pipeline {
+    agent any
 
-$destinationPath = "${remoteUser}@${remoteIP}:`"/C:/Users/Admin/Desktop/`""
+    environment {
+        // Git repository
+        REPO_URL = 'https://github.com/SrikarVanaparthy/VM-VM-.NET.git'
 
+        // SSH key for authentication (secured and readable only by Jenkins)
+        SSH_KEY_PATH = 'C:/Jenkins/ssh/id_rsa'
+    }
 
-scp -i "$privateKeyPath" -o StrictHostKeyChecking=no `
-    "$sourceFile" "$destinationPath"
+    stages {
 
+        stage('Checkout Code') {
+            steps {
+                git url: "${env.REPO_URL}", branch: 'main'
+            }
+        }
 
-# # PowerShell: Transfer user.json from VM1 to VM2
+        stage('Run Migration Script') {
+            steps {
+                powershell '''
+                    Write-Host "Running migrate.ps1 to transfer users.json..."
 
-# # Source (VM1)
-# $sourceFile = "C:\Users\Admin-BL\Desktop\UserswithoutDB\UserswithoutDB\bin\Debug\net8.0\users.json"
+                    # Define script path in workspace
+                    $scriptPath = "$PWD\\migrate.ps1"
 
-# # Destination (VM2)
-# $destinationVM = "104.154.40.124"
-# $destinationPath = "\\$destinationVM\C$\Users\Admin\Desktop"
+                    if (!(Test-Path $scriptPath)) {
+                        Write-Error "migrate.ps1 not found in workspace."
+                        exit 1
+                    }
 
-# # Optional: Credentials if needed for file sharing
-# # $cred = Get-Credential
-# # New-PSDrive -Name Z -PSProvider FileSystem -Root "\\$destinationVM\C$" -Credential $cred
+                    # Run your PowerShell script which uses scp + SSH key
+                    & $scriptPath
 
-# # Copy file to VM2
-# Copy-Item -Path $sourceFile -Destination $destinationPath -Force
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error " migrate.ps1 execution failed."
+                        exit 1
+                    }
 
-# Write-Host "File transferred to VM2 at $destinationPath"
+                    Write-Host "migrate.ps1 executed successfully."
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 File transfer and migration succeeded.'
+        }
+        failure {
+            echo 'Migration failed. Please check console logs.'
+        }
+    }
+}
