@@ -3,7 +3,9 @@ $remoteUser = "admin"
 $remoteIP = "104.154.40.124"
 $privateKeyPath = "C:\\Users\\Admin-BL\\.ssh\\id_rsa"
 
-$destination = "${remoteUser}@${remoteIP}:/C:/Users/Admin/Desktop/"
+$destination = $remoteUser + "@" + $remoteIP + ":'C:/Users/Admin/Desktop/'"
+
+
 
 scp -i "$privateKeyPath" -o StrictHostKeyChecking=no `
     "$sourceFile" "$destination"
