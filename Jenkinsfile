@@ -16,7 +16,7 @@ stages {
         steps {
             withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                 powershell '''
-                    $keyPath = "$env:TEMP\\jenkins_id_rsa"
+                    $keyPath = "$env:WORKSPACE\\jenkins_id_rsa"
                     Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
                     # Strict file permissions (OpenSSH-compatible)
