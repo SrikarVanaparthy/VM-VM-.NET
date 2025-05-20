@@ -22,12 +22,12 @@ pipeline {
                         # Copy the SSH key to a usable location
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                        # Apply strict permissions for OpenSSH
                         $acl = Get-Acl $keyPath
                         $acl.SetAccessRuleProtection($true, $false)
                         $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
                         $acl.SetAccessRule($rule)
                         Set-Acl -Path $keyPath -AclObject $acl
+
 
                         # SCP parameters
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
