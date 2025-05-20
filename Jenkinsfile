@@ -19,10 +19,13 @@ stages {
                     $keyPath = "$env:TEMP\\jenkins_id_rsa"
                     Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                    # Secure the key (required for OpenSSH)
-                    icacls $keyPath /inheritance:r | Out-Null
-                    icacls $keyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
-                    icacls $keyPath /remove "Users" | Out-Null
+                    # Strict file permissions (OpenSSH-compatible)
+                    $acl = Get-Acl $keyPath
+                    $acl.SetAccessRuleProtection($true, $false)
+                    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
+                    $acl.SetAccessRule($rule)
+                    Set-Acl -Path $keyPath -AclObject $acl
+
 
                     $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
                     $remoteUser = "$env:SSH_USER"
