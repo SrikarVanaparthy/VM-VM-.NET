@@ -19,7 +19,7 @@ pipeline {
                         $keyPath = Join-Path -Path (Get-Location) -ChildPath "jenkins_id_rsa"
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                        # Secure permissions: only allow current user read access
+                        # Secure the key permissions (OpenSSH-style)
                         $acl = New-Object System.Security.AccessControl.FileSecurity
                         $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
                         $acl.SetOwner([System.Security.Principal.NTAccount]$env:USERNAME)
@@ -47,8 +47,6 @@ pipeline {
                     '''
                 }
             }
-        }
-
         }
     }
 
