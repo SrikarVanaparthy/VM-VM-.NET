@@ -19,14 +19,14 @@ pipeline {
             steps {
                 powershell '''
                     # Write private key content to a temp file
-                    $keyPath = "$env:TEMP\\id_rsa"
-                    $privateKeyContent = $env:SSH_CRED_PSW
+                    
+                    
 
                     Set-Content -Path $keyPath -Value $privateKeyContent -Force
 
                     # Define parameters for migrate.ps1
                     $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
-                    $remoteUser = "$env:SSH_CRED_USR"
+                    $remoteUser = "admin"
                     $remoteIP   = "104.154.40.124"
                     $destinationPath = "C:/Users/Admin/Desktop/users.json"
 
@@ -42,7 +42,7 @@ pipeline {
                         -SourceFile $sourceFile `
                         -RemoteUser $remoteUser `
                         -RemoteIP $remoteIP `
-                        -PrivateKeyPath $keyPath `
+                        -PrivateKeyPath $SSH_CRED `
                         -DestinationPath $destinationPath
 
                     if ($LASTEXITCODE -ne 0) {
