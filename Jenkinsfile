@@ -16,23 +16,23 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                     powershell '''
-                        # Define where to copy the key
                         $keyPath = Join-Path -Path (Get-Location) -ChildPath "jenkins_id_rsa"
-
-                        # Copy the private key to a writable location
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
-                        # Fix permissions to meet SSH requirements
-                        icacls $keyPath /inheritance:r /grant:r "$env:USERNAME:R" /c | Out-Null
+                        # Secure permissions: only allow current user read access
+                        $acl = New-Object System.Security.AccessControl.FileSecurity
+                        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read", "Allow")
+                        $acl.SetOwner([System.Security.Principal.NTAccount]$env:USERNAME)
+                        $acl.SetAccessRuleProtection($true, $false)
+                        $acl.AddAccessRule($rule)
+                        Set-Acl -Path $keyPath -AclObject $acl
 
-                        # SCP parameters
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
                         $remoteUser = "$env:SSH_USER"
                         $remoteIP   = "104.154.40.124"
                         $destinationPath = "C:/Users/Admin/Desktop/users.json"
                         $scriptPath = "./migrate.ps1"
 
-                        # Run migration script
                         & $scriptPath `
                             -SourceFile $sourceFile `
                             -RemoteUser $remoteUser `
@@ -47,6 +47,8 @@ pipeline {
                     '''
                 }
             }
+        }
+
         }
     }
 
