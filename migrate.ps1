@@ -1,30 +1,27 @@
-$sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
-$remoteUser = "admin"
-$remoteIP = "104.154.40.124"
-$privateKeyPath = "C:\\Jenkins\\ssh\\id_rsa"
+param (
+    [string]$SourceFile,
+    [string]$RemoteUser,
+    [string]$RemoteIP,
+    [string]$PrivateKeyPath,
+    [string]$DestinationPath
+)
 
+# Set secure permissions on private key file (Windows)
+Write-Host "Setting secure permissions on private key file: $PrivateKeyPath"
+icacls $PrivateKeyPath /inheritance:r | Out-Null
+icacls $PrivateKeyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
+icacls $PrivateKeyPath /remove "Users" | Out-Null
 
-$destinationPath = "${remoteUser}@${remoteIP}:`"/C:/Users/Admin/Desktop/`""
+# Build the destination string correctly
+$remoteFullPath = "${RemoteUser}@${RemoteIP}:`"$DestinationPath`""
 
+# Run SCP to transfer file
+Write-Host "Starting file transfer..."
+scp -i "$PrivateKeyPath" -o StrictHostKeyChecking=no "$SourceFile" $remoteFullPath
 
-scp -i "$privateKeyPath" -o StrictHostKeyChecking=no `
-    "$sourceFile" "$destinationPath"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "File transfer failed with exit code $LASTEXITCODE"
+    exit 1
+}
 
-
-# # PowerShell: Transfer user.json from VM1 to VM2
-
-# # Source (VM1)
-# $sourceFile = "C:\Users\Admin-BL\Desktop\UserswithoutDB\UserswithoutDB\bin\Debug\net8.0\users.json"
-
-# # Destination (VM2)
-# $destinationVM = "104.154.40.124"
-# $destinationPath = "\\$destinationVM\C$\Users\Admin\Desktop"
-
-# # Optional: Credentials if needed for file sharing
-# # $cred = Get-Credential
-# # New-PSDrive -Name Z -PSProvider FileSystem -Root "\\$destinationVM\C$" -Credential $cred
-
-# # Copy file to VM2
-# Copy-Item -Path $sourceFile -Destination $destinationPath -Force
-
-# Write-Host "File transferred to VM2 at $destinationPath"
+Write-Host "File transfer completed successfully."

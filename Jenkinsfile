@@ -2,15 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Git repository
         REPO_URL = 'https://github.com/SrikarVanaparthy/VM-VM-.NET.git'
-
-        // SSH key for authentication (secured and readable only by Jenkins)
-        SSH_KEY_PATH = 'C:/Jenkins/ssh/id_rsa'
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git url: "${env.REPO_URL}", branch: 'main'
@@ -18,27 +13,42 @@ pipeline {
         }
 
         stage('Run Migration Script') {
+            environment {
+                SSH_CRED = credentials('ssh_key')  // SSH Username with Private Key credential ID in Jenkins
+            }
             steps {
                 powershell '''
-                    Write-Host "Running migrate.ps1 to transfer users.json..."
+                    # Write private key content to a temp file
+                    $keyPath = "$env:TEMP\\id_rsa"
+                    $privateKeyContent = $env:SSH_CRED_PSW
 
-                    # Define script path in workspace
+                    Set-Content -Path $keyPath -Value $privateKeyContent -Force
+
+                    # Define parameters for migrate.ps1
+                    $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
+                    $remoteUser = "$env:SSH_CRED_USR"
+                    $remoteIP   = "104.154.40.124"
+                    $destinationPath = "C:/Users/Admin/Desktop/users.json"
+
                     $scriptPath = "$PWD\\migrate.ps1"
 
                     if (!(Test-Path $scriptPath)) {
-                        Write-Error "migrate.ps1 not found in workspace."
+                        Write-Error "migrate.ps1 script not found."
                         exit 1
                     }
 
-                    # Run your PowerShell script which uses scp + SSH key
-                    & $scriptPath
+                    # Run migrate.ps1 with parameters
+                    & $scriptPath `
+                        -SourceFile $sourceFile `
+                        -RemoteUser $remoteUser `
+                        -RemoteIP $remoteIP `
+                        -PrivateKeyPath $keyPath `
+                        -DestinationPath $destinationPath
 
                     if ($LASTEXITCODE -ne 0) {
-                        Write-Error " migrate.ps1 execution failed."
+                        Write-Error "Migration script failed."
                         exit 1
                     }
-
-                    Write-Host "migrate.ps1 executed successfully."
                 '''
             }
         }
@@ -46,10 +56,10 @@ pipeline {
 
     post {
         success {
-            echo '🎉 File transfer and migration succeeded.'
+            echo '✅ File transfer and migration completed successfully.'
         }
         failure {
-            echo 'Migration failed. Please check console logs.'
+            echo '❌ Migration failed. Please check the logs.'
         }
     }
 }
