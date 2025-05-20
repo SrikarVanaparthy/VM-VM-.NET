@@ -7,7 +7,7 @@ param (
 )
 
 # Set secure permissions on the SSH private key file (Windows-safe)
-Write-Host "🔐 Setting secure permissions on private key file: $PrivateKeyPath"
+Write-Host "Setting secure permissions on private key file: $PrivateKeyPath"
 icacls $PrivateKeyPath /inheritance:r | Out-Null
 icacls $PrivateKeyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
 icacls $PrivateKeyPath /remove "Users" | Out-Null
@@ -23,12 +23,12 @@ $scpArgs = @(
     "$remoteTarget"
 )
 
-Write-Host "🚀 Starting SCP transfer..."
+Write-Host "Starting SCP transfer..."
 Start-Process -FilePath "scp" -ArgumentList $scpArgs -NoNewWindow -Wait
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "❌ File transfer failed with exit code $LASTEXITCODE"
+    Write-Error " File transfer failed with exit code $LASTEXITCODE"
     exit 1
 }
 
-Write-Host "✅ File transfer completed successfully."
+
