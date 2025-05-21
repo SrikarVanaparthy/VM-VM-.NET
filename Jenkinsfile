@@ -18,7 +18,7 @@ pipeline {
                     powershell '''
                         $ErrorActionPreference = "Stop"
 
-                        $keyPath = "$env:WORKSPACE\\jenkins_id_rsa"
+                        $keyPath = "$env:TEMP\\jenkins_id_rsa"
                         Write-Host "Preparing SSH key..."
 
                         try {
