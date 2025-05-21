@@ -16,14 +16,16 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                     powershell '''
+                        $ErrorActionPreference = "Stop"
+
                         $keyPath = "$env:WORKSPACE\\jenkins_id_rsa"
-                        Write-Host "🔐 Preparing SSH key..."
+                        Write-Host "Preparing SSH key..."
 
                         try {
                             Write-Host "Copying SSH private key to workspace..."
-                            Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force -ErrorAction Stop
+                            Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
                         } catch {
-                            Write-Error "❌ Failed to copy SSH key: $_"
+                            Write-Error "Failed to copy SSH key: $_"
                             exit 1
                         }
 
@@ -33,7 +35,7 @@ pipeline {
                             icacls $keyPath /grant:r "BUILTIN\\Administrators:R" | Out-Null
                             icacls $keyPath /remove "Users" | Out-Null
                         } catch {
-                            Write-Error "❌ Failed to set file permissions: $_"
+                            Write-Error "Failed to set file permissions: $_"
                             exit 1
                         }
 
@@ -43,7 +45,7 @@ pipeline {
                         $destinationPath = "C:/Users/Admin/Desktop/users.json"
                         $scriptPath = "./migrate.ps1"
 
-                        Write-Host "🚀 Starting migration..."
+                        Write-Host "Running migration script..."
                         & $scriptPath `
                             -SourceFile $sourceFile `
                             -RemoteUser $remoteUser `
@@ -52,11 +54,11 @@ pipeline {
                             -DestinationPath $destinationPath
 
                         if ($LASTEXITCODE -ne 0) {
-                            Write-Error "❌ Migration script failed with exit code $LASTEXITCODE"
+                            Write-Error "Migration script failed with exit code $LASTEXITCODE"
                             exit 1
                         }
 
-                        Write-Host "✅ Migration script executed successfully."
+                        Write-Host "Migration script executed successfully."
                     '''
                 }
             }
@@ -65,10 +67,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ File transfer and migration completed successfully.'
+            echo 'File transfer and migration completed successfully.'
         }
         failure {
-            echo '❌ Migration failed. Please check the logs.'
+            echo 'Migration failed. Please check the logs.'
         }
     }
 }
