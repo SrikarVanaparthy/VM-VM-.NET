@@ -17,12 +17,25 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                     powershell '''
                         $keyPath = "$env:WORKSPACE\\jenkins_id_rsa"
-                        Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
+                        Write-Host "🔐 Preparing SSH key..."
+
+                        try {
+                            Write-Host "Copying SSH private key to workspace..."
+                            Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force -ErrorAction Stop
+                        } catch {
+                            Write-Error "❌ Failed to copy SSH key: $_"
+                            exit 1
+                        }
 
                         Write-Host "Setting secure permissions on private key file..."
-                        icacls $keyPath /inheritance:r
-                        icacls $keyPath /grant:r "BUILTIN\\Administrators:R"
-                        icacls $keyPath /remove "Users"
+                        try {
+                            icacls $keyPath /inheritance:r | Out-Null
+                            icacls $keyPath /grant:r "BUILTIN\\Administrators:R" | Out-Null
+                            icacls $keyPath /remove "Users" | Out-Null
+                        } catch {
+                            Write-Error "❌ Failed to set file permissions: $_"
+                            exit 1
+                        }
 
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
                         $remoteUser = "$env:SSH_USER"
@@ -30,6 +43,7 @@ pipeline {
                         $destinationPath = "C:/Users/Admin/Desktop/users.json"
                         $scriptPath = "./migrate.ps1"
 
+                        Write-Host "🚀 Starting migration..."
                         & $scriptPath `
                             -SourceFile $sourceFile `
                             -RemoteUser $remoteUser `
@@ -38,9 +52,11 @@ pipeline {
                             -DestinationPath $destinationPath
 
                         if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Migration script failed."
+                            Write-Error "❌ Migration script failed with exit code $LASTEXITCODE"
                             exit 1
                         }
+
+                        Write-Host "✅ Migration script executed successfully."
                     '''
                 }
             }
