@@ -16,14 +16,13 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh_key', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'SSH_USER')]) {
                     powershell '''
-                        $keyPath = Join-Path -Path (Get-Location) -ChildPath "jenkins_id_rsa"
+                        $keyPath = "$env:WORKSPACE\\jenkins_id_rsa"
                         Copy-Item -Path "$env:SSH_KEY_PATH" -Destination $keyPath -Force
 
                         Write-Host "Setting secure permissions on private key file..."
                         icacls $keyPath /inheritance:r
-                        icacls $keyPath /grant:r "${env:USERNAME}:(R)"
+                        icacls $keyPath /grant:r "BUILTIN\\Administrators:R"
                         icacls $keyPath /remove "Users"
-
 
                         $sourceFile = "C:\\Users\\Admin-BL\\Desktop\\UserswithoutDB\\UserswithoutDB\\bin\\Debug\\net8.0\\users.json"
                         $remoteUser = "$env:SSH_USER"
